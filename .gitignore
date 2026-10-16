@@ -1,3 +1,8 @@
 ﻿node_modules/
 *.log
 
+# 发布辅助内容：留在本地供发布时使用，不推送到公开仓库
+# （PUBLISH.md 与推送脚本涉及本机路径与凭据取法，属内部资料，禁止外发）
+docs/
+scripts/
+*.cmd
