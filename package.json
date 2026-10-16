@@ -1,11 +1,14 @@
 {
   "name": "narrative-anchor",
   "version": "0.8.0",
-  "description": "DSH-Tavern 叙事锚定系统：大纲路线 + 多级记忆 + 当前状态，接入官方后台结算（plugin-api v2，零补丁）",
+  "description": "DSH-Tavern 叙事锚定系统：大纲路线 + 多级记忆 + 当前状态，通过 DSHT 扩展注册点接入后台结算与 foreground-frame",
   "type": "module",
   "main": "lib/index.js",
   "files": [
     "lib/",
+    "!lib/**/*.bak",
+    "!lib/**/*.pre-*",
+    "!lib/**/*.orig",
     "cordis.patch.yml",
     "LICENSE",
     "README.md"
@@ -13,9 +16,9 @@
   "engines": {
     "node": ">=18"
   },
-  "dependencies": {
-    "@deepseek-ai/dsh-tools": "0.1.5-rc.2",
-    "@deepseek-ai/schemastery": "3.18.4"
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "^0.1.5-rc.2",
+    "@deepseek-ai/schemastery": "^3.18.5"
   },
   "exports": {
     ".": "./lib/index.js",
