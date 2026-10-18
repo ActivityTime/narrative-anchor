@@ -23,6 +23,9 @@ DSH-Tavern 插件：把每轮剧情沉淀为**大纲路线 + 当前状态 + 多�
 ## 二、子系统
 
 - **后台结算**：非 MVU 卡走 `replaceSettlement`（单次结构化输出提交）；MVU 卡走 `settlementTool`。
+  两条路径的上下文来源不同：`replaceSettlement` 直接带完整注入块；纯工具注入路径
+  （MVU 官方结算 / 官方兜底）则经官方 `settlementSection` 拿到**四段上下文**——
+  锚点快照 / LTM 动态提示 / 自由栏位注入后台 / 后台指导。
 - **会话临时世界书**（`session-worldbook.js`）：按会话增删条目、绑定到官方世界书、
   导入/导出（SillyTavern 字典格式）、旁白条目（sideline）同步。
 - **官方世界书**（`official-worldbook.js`）：读取 DSHT 世界书、召回审计与历史、
@@ -97,13 +100,23 @@ NA 作为 DSHT profile 的一个 **bundle** 运行，注册点在 profile 而非
 | 世界书条目 | `tavern.worldbookEntries`（条目池，覆盖官方召回 / 后台结算 / 候选全路径） |
 | 后台结算（非 MVU） | `tavern.replaceSettlement` |
 | 后台结算（MVU） | `tavern.settlementTool` |
+| 结算说明段落（纯工具注入路径的上下文） | `tavern.settlementSection` |
 | 前台/后台流投影 | `ctx.on('llm/stream')` |
 | 开始页分组 | `tavernUi.registerStartGroup` |
 | 侧边栏 | `ctx.betterSidebar.registerTab` ×5 |
 | HTTP API | `webServer.register` 前缀路由 `/api/narrative-anchor` |
 
-调试日志写往 DSHT 桌面日志目录（`na-debug.log`、`na-request-log.jsonl`），
-由 `debug` 开关控制。
+调试日志写往 DSHT 桌面日志目录（`<DataDir>/desktop/logs/`）：
+
+| 文件 | 内容 | 大小上限 | 保留 |
+|---|---|---|---|
+| `na-debug.log` | 调试日志（`debug` 开关控制） | 8 MB | 3 份 |
+| `na-proj-diag.log` | 投影替换链路诊断（卡在哪一步） | 4 MB | 2 份 |
+| `na-request-log.jsonl` | 每轮结算请求体审计 | 50 MB | 3 份 |
+
+三个日志均自动轮转（超限即归档为 `.1` / `.2` / `.3`，最老一份被覆盖）。
+
+> 数据区只存数据，日志一律落在桌面日志目录——便于随 DSHT 的日志清理一起管理。
 
 ## 七、配置
 

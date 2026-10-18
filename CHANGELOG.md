@@ -5,6 +5,26 @@
 > 说明：`package.json` 的版本字段仍为 `0.8.0`（历史遗留，代码实现实为 v3.x 系列）。
 > 在未统一版本号之前，各条目以日期区分。
 
+## 2026-10-18（日志归位与轮转）
+
+### 修复
+
+- **日志不再写进数据区**：`proj-diag.log` 由`plugin-data/narrative-anchor/` 迁至
+  DSHT 桌面日志目录（`<DataDir>/desktop/logs/`），与 `na-debug.log`、`na-request-log.jsonl` 同处。
+  数据区只存数据；解析不到日志目录时静默跳过，不回退到插件目录。
+- 清理一处无写入者的历史遗留日志 `merger-debug.log`。
+
+### 新增
+
+- **三个日志统一轮转**：`na-request-log.jsonl`（实测一度涨到 168MB，1338 条平均 128.8KB/条）
+  此前无上限、只增不减。现按写入频率与单条体量分档：`na-proj-diag` 4MB/留 2 份、
+  `na-debug` 8MB/留 3 份、`na-request-log` 50MB/留 3 份，超限即归档。
+  归档用 rename 覆盖最老一份，轮转异常一律吞掉、不阻断业务。
+
+### 文档
+
+- README 补充日志清单与轮转策略、以及 `settlementSection` 四段上下文说明。
+
 ## 2026-10-17 · 补发（结算注入链路）
 
 ### 修复
