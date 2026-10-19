@@ -5,6 +5,27 @@
 > 说明：`package.json` 的版本字段仍为 `0.8.0`（历史遗留，代码实现实为 v3.x 系列）。
 > 在未统一版本号之前，各条目以日期区分。
 
+## 2026-10-20（新增全局设置：酒馆后台-叙事锚定结算协议-提示词）
+
+### 新增
+- **全局设置【酒馆后台-叙事锚定结算协议-提示词】**（`backendSettleProtocol`，与 settlePersona /
+  settleTaskPrompt 同级，位于锚点设置页「全局设置」块）：
+  - 注入位置：后台结算任务消息中【当前叙事锚定快照】**之后**，以【叙事锚定结算协议】段注入；
+    未配置/为空 → 用默认值，`global.json` 无需预置键（与 settlePersona/settleTaskPrompt 同构）。
+  - 默认值：只依据本轮正文事实更新，Brief thinking, no drafts / ！强调记忆分工，不要把
+    known_facts 当做事件流水，那是 STM 的工作 / 如果有其他工具需要提交，尽可能在一次提交内
+    完成，不要拆分多次！
+  - `lib/settlement/official-v2.js`：新增常量 `DEFAULT_BACKEND_SETTLE_PROTOCOL` 与 getter
+    `backendSettleProtocolOf()`；`settle()` 任务消息数组在 context（【当前叙事锚定快照】）
+    段之后插入该段，其余段落顺序未变。
+  - `lib/index.js`：getConfig 返回 `backendSettleProtocol` / `backendSettleProtocolCustomized`
+    （未配置回默认值）；setConfig 新增持久化分支（空串 = 删键回默认，字符串 = 落盘），
+    并补 `protocolLen` 诊断日志。
+  - `lib/client.js`：全局设置折叠块新增对应 `details` 行（textarea + 恢复默认/保存此项，
+    样式与另两个提示词行一致）；草稿恢复新增 `protocol` 档，切换/刷新不丢失未保存编辑。
+- 生效：server 模块（official-v2.js / index.js）需**完全重启 DSH Desktop**；client.js
+  刷新页面即生效。
+
 ## 2026-10-20（舞台视图：官方全屏 overlay 的非全屏移植）
 
 ### 新增
