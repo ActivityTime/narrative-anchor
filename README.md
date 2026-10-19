@@ -44,7 +44,7 @@ DSH-Tavern 插件：把每轮剧情沉淀为**大纲路线 + 当前状态 + 多�
 ## 三、环境要求
 
 - Node.js >= 18
-- **DSHT 2.7.0**（在此版本验证）——需要支持官方 plugin-api v2，即宿主提供：
+- **DSH >= 0.1.5-rc.1**（已在 `0.2.1-rc.2` 上验证）——需要宿主提供以下 plugin-api v2 能力：
   - `tavern.replaceSettlement` / `tavern.settlementTool`（后台结算）
   - `tavern.worldbookEntries`（世界书条目注入）
   - `tavern.turnSection` / `tavern.promptSection`（前台注入）
@@ -52,20 +52,41 @@ DSH-Tavern 插件：把每轮剧情沉淀为**大纲路线 + 当前状态 + 多�
 - 运行时依赖由宿主提供（`peerDependencies`，无需单独安装）：
   `@deepseek-ai/dsh-tools`、`@deepseek-ai/schemastery`
 
-> 未提供上述 API 的旧版 DSHT 上，对应能力会静默跳过（不报错、不阻断正文）。
+> 未提供上述 API 的旧版宿主上，对应能力会静默跳过（不报错、不阻断正文）。
 
 ## 四、安装
 
-NA 作为 DSHT profile 的一个 **bundle** 运行，注册点在 profile 而非插件自身：
+NA 是 DSH 的 **bundle 插件**（`package.json` 声明 `dsh.bundle.patch`）。在 **DSH 终端**执行
+（桌面版：设置 → 通用设置 → 打开 DSH 终端；profile 固定 `tavern`）：
 
-1. 把插件放到 `<DSHT 数据目录>/harness/profiles/tavern/node_modules/narrative-anchor`，
-   或用包管理器安装（`npm i narrative-anchor` / pnpm 等）；
-2. 编辑同一目录下的 profile `package.json`：
-   - 在 `dependencies` 中加入 `"narrative-anchor": "<版本或路径>"`
-   - 在 `dsh.profile.bundles` 数组中加入 `"narrative-anchor"`
-3. 重启 DSHT。
+```bash
+# 从 GitHub 安装（推荐，依赖自动安装）
+dsh plugin --profile tavern add github:ActivityTime/narrative-anchor
 
-**不需要修改 DSHT 源码，也没有"打补丁"这一步。**
+# 从本地路径安装
+dsh plugin --profile tavern add file:/绝对路径/narrative-anchor
+dsh plugin --profile tavern add link:/绝对路径/narrative-anchor
+
+# 卸载
+dsh plugin --profile tavern remove narrative-anchor
+```
+
+装完**完全重启 DSH**。验证（无需启动宿主）：
+
+```bash
+dsh --profile tavern --dump-config   # 应出现 "# == narrative-anchor" 层
+```
+
+> ⛔ **不要手工编辑 profile 的 `package.json`**（`dependencies` 或 `dsh.profile.bundles`）——
+> 那是 `dsh plugin add` 的内部产物，DSH 每次 profile 重装都会重写覆盖，手改无效。
+>
+> ⛔ **本插件不在 npm 上**，`npm i narrative-anchor` 会 404。请用上面的 `dsh plugin add`。
+
+另一条官方路径是 Tavern 插件的文件夹投放：把插件文件夹放进
+`~/.dsh/profile-data/tavern/data/plugins/`，刷新页面即生效（不调 pnpm，需先在插件目录装好依赖）。
+详见 [DSH-Tavern 官方文档 · 安装与组合 DSH 扩展](https://flizzywine.github.io/dsh-tavern/#m07)。
+
+**不需要修改 DSH 源码，也没有"打补丁"这一步。**
 
 ## 五、数据存放
 
