@@ -4,6 +4,7 @@ DSH-Tavern 插件：把每轮剧情沉淀为**大纲路线 + 当前状态 + 多�
 在下一轮正文与结算之间保持长期叙事连贯。
 
 > 自 v3.0 起**零补丁**——不再修改 DSHT 源码，全部改为官方 plugin-api v2 原生能力。
+> v3.0 线**已适配 DSH Desktop 3.0**（v3.0 安装器布局 / DSH runtime `0.2.1-rc.2` / session format v4）。
 
 ## 一、锚点数据模型
 
@@ -44,7 +45,7 @@ DSH-Tavern 插件：把每轮剧情沉淀为**大纲路线 + 当前状态 + 多�
 ## 三、环境要求
 
 - Node.js >= 18
-- **DSH >= 0.1.5-rc.1**（已在 `0.2.1-rc.2` 上验证）——需要宿主提供以下 plugin-api v2 能力：
+- **DSH >= 0.1.5-rc.1**；**已适配 DSH Desktop 3.0**（v3.0 安装器布局 + DSH runtime `0.2.1-rc.2` + session format v4）——需要宿主提供以下 plugin-api v2 能力：
   - `tavern.replaceSettlement` / `tavern.settlementTool`（后台结算）
   - `tavern.worldbookEntries`（世界书条目注入）
   - `tavern.turnSection` / `tavern.promptSection`（前台注入）
@@ -91,10 +92,13 @@ dsh --profile tavern --dump-config   # 应出现 "# == narrative-anchor" 层
 ## 五、数据存放
 
 插件自持数据**不写在插件安装位置**（否则开发时在源码目录、发布时在 node_modules，升级即丢），
-而是自动落在 DSHT 用户数据区：
+而是自动落在 DSHT 用户数据区（两种安装布局，下方目录结构相同）：
 
 ```
-<DSHT 数据目录>/harness/profile-data/tavern/data/plugin-data/narrative-anchor/
+# DSH Desktop 3.0 新布局（DSH_HOME 机制）
+<DSH_HOME>/profile-data/tavern/data/plugin-data/narrative-anchor/
+# 旧版 stable 布局（launcher-settings.xml 的 DataDirectory）
+<DataDirectory>/harness/profile-data/tavern/data/plugin-data/narrative-anchor/
 ├── anchors/<sessionId>.json        锚点数据
 ├── global.json                     全局共享设置（结算人格/任务提示词等）
 ├── session-worldbooks/             会话临时世界书
@@ -102,13 +106,21 @@ dsh --profile tavern --dump-config   # 应出现 "# == narrative-anchor" 层
     worldbook-combos.json / branch-families.json
 ```
 
-数据根目录在**运行时**由 DSHT 安装根 `launcher-settings.xml` 的 `<DataDirectory>` 推导
-（唯一路径真相源 `lib/paths.js`）：
+数据根目录在**运行时**由唯一路径真相源 `lib/paths.js` 按优先级解析，新旧布局自动识别：
+
+- ① 插件显式配置 `tavernDataRoot`（用户唯一可指定的外部路径，优先级最高）；
+- ② **DSH Desktop 3.0**：官方 `DSH_HOME` / `DSH_TAVERN_DATA_DIR` 环境变量（DSHT 进程内由
+  launcher/updater 注入），数据根 = `<DSH_HOME>/profile-data/tavern/data`；与「模块从哪个
+  路径加载」无关，junction / symlink / 正式 npm 安装全部适用；
+- ③ 旧版 stable：从插件根与 cwd 向上遍历，发现安装根 `launcher-settings.xml` 并读其
+  `<DataDirectory>`，数据根 = 其下 `harness/profile-data/tavern/data`；
+- ④ 解析不到时（例如单元测试环境）自动回退到 `<插件根>/data/`；首次启动会把旧版本的
+  `<插件根>/data/` 内容自动迁移到上述目录。
+
+两种布局共同点：
 
 - 不依赖盘符、安装路径、用户名或固定层级，Windows / macOS / Linux 行为一致；
-- 换机器、换盘、改目录名都无需改动任何代码；
-- 解析不到时（例如单元测试环境）自动回退到 `<插件根>/data/`；
-- 首次启动会把旧版本的 `<插件根>/data/` 内容自动迁移到上述目录。
+- 换机器、换盘、改目录名都无需改动任何代码。
 
 ## 六、架构与注册面
 
