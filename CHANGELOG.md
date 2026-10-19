@@ -5,6 +5,19 @@
 > 说明：`package.json` 的版本字段仍为 `0.8.0`（历史遗留，代码实现实为 v3.x 系列）。
 > 在未统一版本号之前，各条目以日期区分。
 
+## 2026-10-20（修复：LTM/known_facts 编辑保存 keywords 数组兼容）
+
+### 修复
+- `lib/client.js` 三处 `saveEdit` 提交前的 keywords 拆解改为数组兼容：
+  编辑草稿中的 `keywords` 可能已是数组（而非字符串），原先直接 `.split()` 会抛
+  `TypeError: editDraft.keywords.split is not a function`，导致 LTM 节点 /
+  known_facts 条目 / 通用列表标签三类编辑「保存」按钮点击无响应。
+  - LTM 节点保存（`saveEdit('ltm.' + node.id, …)`）
+  - known_facts 条目保存（`saveEdit('kf.' + origIdx, …)`）
+  - 通用列表标签保存（`saveEdit(path, { [label]: … })`）
+  - 口径统一为：`Array.isArray(draft.keywords) ? draft.keywords : String(draft.keywords ?? fallback).split(/[、，,;；\n]+/)`，再 `.map(s => s.trim()).filter(Boolean)`。
+- 生效：client.js 改动，**刷新页面**即生效，无需重启。
+
 ## 2026-10-20（新增全局设置：酒馆后台-叙事锚定结算协议-提示词）
 
 ### 新增
