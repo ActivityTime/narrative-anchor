@@ -5,6 +5,33 @@
 > 说明：`package.json` 的版本字段仍为 `0.8.0`（历史遗留，代码实现实为 v3.x 系列）。
 > 在未统一版本号之前，各条目以日期区分。
 
+## 2026-10-20（v3.0 线适配 DSH Desktop 3.0）
+
+> **适配声明**：NA v3.0（零补丁线）已完成 **DSH Desktop 3.0** 适配——v3.0 安装器布局
+> （数据根解析走官方 `DSH_HOME` 机制，真相源 `lib/paths.js`）、DSH runtime `0.2.1-rc.2`、
+> session format v4。旧版 stable 布局（安装根 `launcher-settings.xml` 的 `<DataDirectory>`）
+> 由同一真相源兼容，两种安装布局自动识别、行为一致。README「环境要求 / 数据存放」
+> 已按双布局更新。
+
+### 修复
+- **后台结算会话稳定损坏（`assistant/message does not match an open turn and step`）**：
+  复刻官方 `rewindBackgroundSurface` 时漏了 `withSurfaceEditTurn` 包裹。replacement 落在
+  append-only 日志尾部，released V4 按「尾部当时开着的 turn/step」校验墓碑（而非被遮蔽区间）；
+  rewind 运行于上一轮 `turn/end` 之后，旧实现把 turn/step 抄自已关闭轮次裸 append，
+  恢复校验拒绝 → 每个跑过后台结算的 na-background 会话每轮稳定中招、存档不可加载。
+  `lib/settlement/rewind-surface.js` 现按官方语义补编辑轮次包裹：尾部无开轮次时新开
+  `turn=N+1/step=1` → 写墓碑 → `step/end`+`turn/end`；墓碑携带编辑轮次号；同步
+  `agent.phase.lastTurn`（循环下一轮号来源，判据同开场白路径）；另加全覆盖幂等预检，
+  重复调用不再堆叠空转轮次。`lib/settlement/official-v2.js` 调用点改传 `resident.agent`。
+- 验证（`_analysis_tmp/verify-rewind-fix.mjs`）：负对照（旧逻辑）精确复现该报错；
+  新逻辑经 app 同款宿主 catalog 两种校验模式全过、墓碑全部位于编辑轮次内、
+  surface 收敛为「系统头 + 一枚最新墓碑」、轮次号任务/编辑交替无撞号、幂等收敛。
+- **请求体日志面板（RequestLogTab）长内容截断与滚动**：分组列表由
+  `maxHeight:calc(100vh-100px)` 整体滚动改为弹性滚动容器（外层 `overflow:hidden`，
+  内层 `flex:1 1 0; min-height:0; overflow-y:auto`），在侧边栏受限高度内稳定滚动；
+  摘要行与「末条消息预览」去掉单行 `text-overflow:ellipsis` 截断，改 `pre-wrap` 断行，
+  长会话 ID / 长预览完整可见。
+
 ## 2026-10-19（v4 兼容与依赖最终修正）
 
 > 取代同日早前的「放宽 dsh-tools 版本范围」条目：dsh-tools 不再声明，改为 dsh-agent。
