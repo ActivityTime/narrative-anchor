@@ -5,6 +5,30 @@
 > 说明：`package.json` 的版本字段仍为 `0.8.0`（历史遗留，代码实现实为 v3.x 系列）。
 > 在未统一版本号之前，各条目以日期区分。
 
+## 2026-10-20（舞台视图改官方 reader/footer 模式：朗读开关恢复官方语义）
+
+### 变更
+- **na-stage 舞台视图改为卡内插件既定模式**（参照本机另一个 `registerStageView`
+  实现 dsh-card-dafeiyu-galgame：「翻页、自动、输入框和音乐播放仍由 Tavern 负责」）：
+  reader / reading / 翻页 / 朗读开关全部用官方的——视图只画场景，index/beat/advance
+  走官方 input，controls 原样渲染官方 `input.footer`（‹ 进度 › 朗读）。
+- **修复「朗读」开关失灵**（取代同日「官方全屏 overlay 非全屏移植」一条的实现与已知边界）：
+  上一代自建 reader/reading 造成两个朗读开关实例——NA 自绘按钮切的是 NA 自己的状态，
+  而官方 section effect（cast-stage.js:292-294）检查的是官方实例，其唯一 UI（官方
+  footer 的「朗读」按钮）被丢弃，永远停在默认开：关掉 NA 的「朗读」后，每轮首句仍会被
+  官方 effect 读一句。现全链路只有一个朗读者、一个开关：关掉「朗读」→ 官方 effect 与
+  自动翻页都不发声，与内置舞台同语义。
+- 「自动」按钮保留（官方非全屏没有它）：定时调官方 `advance()`，朗读由官方 section
+  effect 在每次翻页时触发。翻页计时按官方时长公式 `clamp(1500, 400+70×字数, 10000)`
+  （官方 auto 的读不成分支同款）——官方 reader 下插件拿不到 section effect 那次 speak
+  的播放完信号（speech 模块只有 speak/stop，无播放状态/事件，tavernUi 也无对应 API），
+  故不照搬全屏 auto 的「等播完」时序。
+- 移除：自建 reader/reading、自绘「朗读」按钮、NA 侧 speak 接线（`lib/client.js`）。
+- 验证：react-test-renderer 真实渲染冒烟 34/34 通过（渲染树 / 自动排程与计时公式 /
+  advance 引用抖动不重置计时 / 末句不排程 / 场景点击翻页 / 空 beats / 全屏与缺 advance
+  回退内置）；`node --check` 通过。
+- 生效：client.js 改动，**刷新页面**即生效，无需重启。
+
 ## 2026-10-20（修复：LTM/known_facts 编辑保存 keywords 数组兼容）
 
 ### 修复
