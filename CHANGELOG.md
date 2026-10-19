@@ -5,6 +5,20 @@
 > 说明：`package.json` 的版本字段仍为 `0.8.0`（历史遗留，代码实现实为 v3.x 系列）。
 > 在未统一版本号之前，各条目以日期区分。
 
+## 2026-10-19（DSH 0.2 兼容修正）
+
+### 修复
+
+- **`peerDependencies` 补 DSH 0.2 支持**：`@deepseek-ai/dsh-tools` 由 `^0.1.5-rc.2`
+  放宽为 `^0.1.5-rc.1 || ^0.2.0-rc.1`。此前声明只覆盖 0.1.x，在 DSH runtime 0.2.1-rc.2 下
+  `dsh plugin add` 会判定版本不兼容并拒绝安装（`Plugin narrative-anchor@0.8.0 is incompatible
+  with dsh 0.2.1-rc.2`）。本插件只用 `dsh-tools` 的 `defineTool`，跨该版本未变更。
+
+### 新增
+
+- **`devDependencies` 首次声明** `@deepseek-ai/dsh-tools: ^0.2.1-rc.2`，满足 DSH 官方发布规范
+  「需与宿主共享实例的 dsh 包须同时声明在 `peerDependencies` 与 `devDependencies`」。
+
 ## 2026-10-18（日志归位与轮转）
 
 ### 修复
