@@ -5,6 +5,48 @@
 > 说明：`package.json` 的版本字段仍为 `0.8.0`（历史遗留，代码实现实为 v3.x 系列）。
 > 在未统一版本号之前，各条目以日期区分。
 
+## 2026-10-20（舞台视图：官方全屏 overlay 的非全屏移植）
+
+### 新增
+- **舞台「自动」按钮非全屏可用（官方 `tavernUi.registerStageView`，apiVersion≥2）**：
+  官方非全屏舞台 control 条只有 ‹ 进度 › 朗读，「自动」只存在于全屏 overlay；且没有任何
+  「往官方 footer 里加按钮」的接口——接口参考原话「页面结构不是接口」，故不做 DOM 注入。
+  本版按用户要求**整体照抄官方全屏 overlay（TavernStageFullscreen）的非全屏形态**，
+  注册舞台视图 `na-stage`（label「NA 舞台」）：
+  - `reader`/`reading` 自建，口径逐行复刻官方 `useTavernStageReader` /
+    `useTavernStageReading`（`cast-stage.js:119-127/131-143`，localStorage 同键
+    `dsh-tavern-stage-read`，新一轮重置首句、toggle 停播、卸载停播）；
+  - 场景照官方 `TavernStageScene` 口径（`:61-85`：背景/上台规则/立绘选图/情绪标签/
+    文本箱；保真校验：情绪映射 28 项键序值与官方逐一一致、选图四级兜底用例全中）；
+  - controls 照官方全屏 footer 口径（`:192-199`）：‹ 进度 › **自动** 朗读，顺序、类名、
+    disabled 边界与全屏一致；
+  - 「自动」= 官方 auto 三元组整体移植（`:157` state + `:173-182` effect + `:196` 按钮），
+    逐行同款：朗读开着先读当前句，听到完（`heard`）只补 400ms 缓冲翻页；读不成
+    （配音关闭/旁白无声音 → 宿主回 `{skip:true}`、前端 resolve false）按台词长度定时
+    `clamp(1500, 400+70×字数, 10000)`；演完熄火保持点亮。仅两处插件侧必要适配：
+    `speak` 取 `tavernUi.speak`（判空）、`.catch` 防 speak reject 时卡住不翻页；
+  - **不调用 `advance()`**：官方 section 的 reader 随之冻结，其「翻页即读」effect 不再
+    每页触发（官方全屏态靠该 effect 的 `!fullscreen` 条件静音它，非全屏没有这个开关，
+    故以自管 reader 达到同一效果——NA 是每页唯一朗读者，朗读与翻页在同一处成对发生）；
+  - 全屏返回 null → 官方边界兜底用内置全屏（自带「自动」），不双按钮；render 抛错同样
+    兜底回内置画面。
+- 已知边界：每轮新 beats 到达时，官方 section 的 reader（冻结在首句）其 effect 仍会触发
+  一次朗读，与 NA 首句竞争（单例后发赢）——表现为每轮第一句按台词时长翻页，第二句起
+  播完才翻。官方全屏态无此问题（`!fullscreen` 静音），非全屏下无等价开关。
+- 注意：注册后舞台样式默认切到「NA 舞台」（官方设计：未选过样式时默认用插件视图），
+  可在舞台页「舞台样式」选回「内置」。
+
+### 修复
+- **后台 catalog 去重漏判（`duplicate catalog child`）**：released V4 下 catalog/descriptor
+  等系统事件改经 `snapshotEvents()` 暴露，直读 `session.events` 会漏掉已写入的
+  subagent/catalog → 去重失效、每轮结算重复 append → DSH 加载会话抛 "duplicate catalog child"。
+  `lib/settlement/official-v2.js` 新增与宿主 `background-agent-sessions.js` /
+  `background-catalog.js` 同口径的 `allEvents()` 访问器（优先 `snapshotEvents()`，
+  回退 `events`/`_events`）；`registerCatalogChild` 补同 childId 幂等跳过，
+  subagent/descriptor 去重同源。
+- **新建支线起步为空**：创建支线即拉取族内已有【支线】条目（`syncSidelineEntries`），
+  不必再等一轮结算才出现（`lib/index.js`）。
+
 ## 2026-10-20（v3.0 线适配 DSH Desktop 3.0）
 
 > **适配声明**：NA v3.0（零补丁线）已完成 **DSH Desktop 3.0** 适配——v3.0 安装器布局
