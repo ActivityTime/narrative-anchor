@@ -5,6 +5,29 @@
 > 说明：`package.json` 的版本字段仍为 `0.8.0`（历史遗留，代码实现实为 v3.x 系列）。
 > 在未统一版本号之前，各条目以日期区分。
 
+## 2026-10-19（v4 兼容与依赖最终修正）
+
+> 取代同日早前的「放宽 dsh-tools 版本范围」条目：dsh-tools 不再声明，改为 dsh-agent。
+
+### 修复
+- **后台结算每轮失败（DSH 0.2.x / session format v4）**：写入侧 `dsh-session-format`
+  要求 `source.kind` 为 producer-owned（非空字符串、不等于裸 `plugin`），否则抛
+  「format v4 message requires a producer-owned source kind」。`lib/settlement/official-v2.js`
+  的结算任务消息 source 由 `{ kind: 'plugin', plugin: 'narrative-anchor' }` 改为
+  `{ kind: 'plugin:narrative-anchor' }`，与 tavern-plugin 的 message-source 写法一致。
+- **V4 下 tavern 注入消息被误判为真实用户输入**：`lib/index.js` 用户消息判定与
+  `official-v2.js` 的 `naTavernStateFilter` 此前只识别 V3 的 `kind:'plugin'` + `plugin:'dsh-tavern'`。
+  现改 `startsWith('plugin')` / 同时匹配 `kind:'plugin:dsh-tavern'`，覆盖 V3 与 V4，
+  避免把 free_slots 注入错挂到插件消息、状态过滤退化到只能靠文本兜底。
+
+### 变更
+- **依赖最终修正**：移除 `@deepseek-ai/dsh-tools`（`lib/index.js` 已不再 import 其 `defineTool`，
+  相关工具注册改走官方 settlement/tool API），`peerDependencies` 与 `devDependencies` 改为
+  `@deepseek-ai/dsh-agent: ^0.2.0-rc.1`，与 DSH 0.2 运行时对齐。
+
+### 其他
+- `lib/client.js` 请求体日志区补 `height/maxHeight/overflowY` 样式，长日志可滚动。
+
 ## 2026-10-19（DSH 0.2 兼容修正）
 
 ### 修复
