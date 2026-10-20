@@ -169,8 +169,8 @@ narrative-anchor:
 - **会话级**（`anchors/<sid>.json` 的 `meta.settings`）：`enabled`、`maxSTMLength`、
   `injectPosition`、`projectionReplace`、`skipAllPresentLtm`、`backgroundGuide`
 - **全局级**（`global.json`）：`settlePersona`（结算人格）、`settleTaskPrompt`（结算任务提示词）、
-  `blockBackgroundCompaction`（拦截后台压缩，默认开）、
-  `deleteBackgroundSessionOnBlock`（拦截命中时删除后台会话，默认开）
+  `blockBackgroundCompaction`（拦截后台压缩，**默认关**——勾选后才拦截）、
+  `deleteBackgroundSessionOnBlock`（拦截命中时删除后台会话，默认开；仅拦截开启时生效）
 
 ## 八、LLM 工具
 

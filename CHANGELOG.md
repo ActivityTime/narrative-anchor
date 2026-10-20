@@ -5,7 +5,36 @@
 > 说明：`package.json` 的版本字段仍为 `0.8.0`（历史遗留，代码实现实为 v3.x 系列）。
 > 在未统一版本号之前，各条目以日期区分。
 
-## 2026-10-20（舞台视图改官方 reader/footer 模式：朗读开关恢复官方语义）
+## 2026-10-21（后台结算协议提示词改版：七行硬规则 + posture_submit 顺序；注入改单段）
+
+### 变更
+- **【酒馆后台-叙事锚定结算协议-提示词】默认值改版**（`lib/settlement/official-v2.js`
+  `DEFAULT_BACKEND_SETTLE_PROTOCOL`，锚点设置页"全局设置"可覆盖）：修「后台老是不结算
+  锚点」。旧默认值只有三行残缺描述句——无"必须调用"祈使、无空提交兜底；且本路径
+  （官方后台 settlementSection）**不挂插件的 settlePersona**，persona 里的强规则
+  一句不过去，默认值必须自带。新版七行：
+  1. 本轮必须调用 narrative_anchor_submit：工具调用是唯一提交通道，未调用 = 本轮结算失败；
+  2. 即使判断本轮无任何变化，也必须调用并以空对象 {} 提交，禁止跳过（"无可更新即跳过调用"
+     是头号嫌疑——该规则虽在工具描述里，但埋在 schema 深处权重低，协议段显式兜住）；
+  3. 只依据本轮正文已发生事实更新，不预测、不续写、不复述；
+  4. 同轮多工具在一次回复中同时调用、互不依赖，禁止拆分多次；
+  5. posture_submit 必须是最后一个，否则会导致后续工具提交失效（用户实测口径）；
+  6. 记忆分工：known_facts 不是事件流水，那是 STM 的工作；
+  7. 具体提交规则（增量合并 / stm 每轮 1 条 / LTM 合并阈值 / known_facts 写法）以
+     narrative_anchor_submit 工具描述为准。
+- **协议注入机制调整并单段化**（修正 10-20 同名条目中的"任务消息注入"描述）：
+  - 注入位置从 settle 任务消息改为酒馆（宿主）后台的 `settlementSection`
+    （`narrative-anchor.1b-backend-protocol`，位于【当前叙事锚定快照】之后，由官方
+    background-agent-task 拼进【插件附加的结算任务】；MVU 结算与官方兜底同走此路）；
+  - 当日上线当日废除的拆分机制：按换行拆最多 16 段（为绕官方单段 8000 字上限）——
+    默认协议仅三百余字、一段足够，删除 `backendProtocolRawChunks` / `backendProtocolChunk` /
+    段数上限常量，改为单段函数 `backendProtocolSection`（标题 + 全文；超 8000 字仅
+    dbg 诊断、不自我截断，与快照段同款）。
+- 设置页 UI 描述同步更新（原"强调记忆分工与同轮多工具一次提交"过时）。
+- 生效：lib 改动需**重启/重载插件一次**（注册名变更）；之后改协议内容每轮实时读全局
+  文件、无需重启。
+
+## 2026-10-20（舞台视图改官方 reader/footer 模式：朗读开关恢复官方语义，「自动」播完再翻页）
 
 ### 变更
 - **na-stage 舞台视图改为卡内插件既定模式**（参照本机另一个 `registerStageView`
@@ -18,15 +47,22 @@
   footer 的「朗读」按钮）被丢弃，永远停在默认开：关掉 NA 的「朗读」后，每轮首句仍会被
   官方 effect 读一句。现全链路只有一个朗读者、一个开关：关掉「朗读」→ 官方 effect 与
   自动翻页都不发声，与内置舞台同语义。
-- 「自动」按钮保留（官方非全屏没有它）：定时调官方 `advance()`，朗读由官方 section
-  effect 在每次翻页时触发。翻页计时按官方时长公式 `clamp(1500, 400+70×字数, 10000)`
-  （官方 auto 的读不成分支同款）——官方 reader 下插件拿不到 section effect 那次 speak
-  的播放完信号（speech 模块只有 speak/stop，无播放状态/事件，tavernUi 也无对应 API），
-  故不照搬全屏 auto 的「等播完」时序。
-- 移除：自建 reader/reading、自绘「朗读」按钮、NA 侧 speak 接线（`lib/client.js`）。
-- 验证：react-test-renderer 真实渲染冒烟 34/34 通过（渲染树 / 自动排程与计时公式 /
-  advance 引用抖动不重置计时 / 末句不排程 / 场景点击翻页 / 空 beats / 全屏与缺 advance
-  回退内置）；`node --check` 通过。
+- **「自动」按钮照官方全屏 auto effect（cast-stage.js:174-182）移植，恢复「播完再翻页」**：
+  官方「播完再翻页」不依赖任何播放状态 API——auto effect 自己调 speak、await 那个
+  promise（heard 到结尾才 resolve true，speech.js:27/39/49），再 heard ? 400ms : 时长
+  公式翻页。NA 经公开接口 `tavernUi.speak`（plugin-extensions.js:244-249，转发的就是
+  同一个 speech 单例）照此接线。非全屏唯一结构差异：官方全屏里 section 的「翻页即读」
+  effect 被 `!fullscreen` 静音、auto effect 是唯一朗读者；非全屏没有该开关，section
+  effect 会在同一次提交里后跑并 stop 掉先发的那次 speak，故 NA 把发声排到本次提交所有
+  effect 之后（queueMicrotask）成为最终朗读者。朗读关闭时 NA 不发声、只按官方时长公式
+  `clamp(1500, 400+70×字数, 10000)` 翻页。
+- 移除：自建 reader/reading、自绘「朗读」按钮。
+- 已知边界：朗读开启且自动开启时，每次翻页会额外发起一次 `speechForLine` 请求
+  （官方 section effect 那次，被 NA 后发的 speak 中止、不播放）。
+- 验证：react-test-renderer 真实渲染冒烟 81/81 通过（含「官方 section 与 NA 竞发时
+  NA 为最终朗读者（对方被 stop、NA heard=true）」时序用例、朗读关零发声、heard=false
+  与 speak reject 均退回时长公式、advance 引用抖动不重置计时、末句不排程、场景点击
+  翻页、空 beats、全屏与缺 advance 回退内置）；`node --check` 通过。
 - 生效：client.js 改动，**刷新页面**即生效，无需重启。
 
 ## 2026-10-20（修复：LTM/known_facts 编辑保存 keywords 数组兼容）
