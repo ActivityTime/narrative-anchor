@@ -42,9 +42,6 @@ DSH-Tavern 插件：把每轮剧情沉淀为**大纲路线 + 当前状态 + 多�
 - **后台会话治理**：拦截后台会话压缩、清空后台会话/DSHT 原生 `background-*` 会话，
   避免长期跑团日志膨胀。
 
-  <img width="2560" height="1040" alt="image" src="https://github.com/user-attachments/assets/9732dac1-1c7e-4084-987f-380c56368a3d" />
-
-
 ## 三、环境要求
 
 - Node.js >= 18
@@ -172,8 +169,8 @@ narrative-anchor:
 - **会话级**（`anchors/<sid>.json` 的 `meta.settings`）：`enabled`、`maxSTMLength`、
   `injectPosition`、`projectionReplace`、`skipAllPresentLtm`、`backgroundGuide`
 - **全局级**（`global.json`）：`settlePersona`（结算人格）、`settleTaskPrompt`（结算任务提示词）、
-  `blockBackgroundCompaction`（拦截后台压缩，默认开）、
-  `deleteBackgroundSessionOnBlock`（拦截命中时删除后台会话，默认开）
+  `blockBackgroundCompaction`（拦截后台压缩，**默认关**——勾选后才拦截）、
+  `deleteBackgroundSessionOnBlock`（拦截命中时删除后台会话，默认开；仅拦截开启时生效）
 
 ## 八、LLM 工具
 
