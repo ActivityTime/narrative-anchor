@@ -42,6 +42,9 @@ DSH-Tavern 插件：把每轮剧情沉淀为**大纲路线 + 当前状态 + 多�
 - **后台会话治理**：拦截后台会话压缩、清空后台会话/DSHT 原生 `background-*` 会话，
   避免长期跑团日志膨胀。
 
+  <img width="2560" height="1040" alt="image" src="https://github.com/user-attachments/assets/9732dac1-1c7e-4084-987f-380c56368a3d" />
+
+
 ## 三、环境要求
 
 - Node.js >= 18
