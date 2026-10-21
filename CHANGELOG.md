@@ -22,6 +22,7 @@
 - **安装方式影响**：folder-drop（`<data>/plugins/`）安装不再需要手动 `pnpm install`，
   与 bundle 安装（`dsh plugin --profile tavern add`）行为一致；配置默认值两种方式相同。
 - 版本号：`1.0.0` → `1.0.1`。
+- **README 补充两种安装方式差异对照表**（bundle `dsh plugin add` vs folder-drop `<data>/plugins/`）：依赖安装机制、宿主包可解析性（folder-drop 必须零运行时外部依赖）、配置来源（seed 层 vs Schema 默认值）、安装位置、重名检查、维护方六维对照。
 
 ## v1.0.0（2026-10-21 发布：叙事锚定系统首个完整功能版本）
 
