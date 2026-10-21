@@ -87,7 +87,9 @@ dsh --profile tavern --dump-config   # 应出现 "# == narrative-anchor" 层
 > ⛔ **本插件不在 npm 上**，`npm i narrative-anchor` 会 404。请用上面的 `dsh plugin add`。
 
 另一条官方路径是 Tavern 插件的文件夹投放：把插件文件夹放进
-`~/.dsh/profile-data/tavern/data/plugins/`，刷新页面即生效（不调 pnpm，需先在插件目录装好依赖）。
+`~/.dsh/profile-data/tavern/data/plugins/`，刷新页面即生效（不调 pnpm）。
+自 v1.0.1 起插件无任何运行时外部依赖（宿主包一律动态解析 + 本地兜底），
+folder-drop 与 bundle 安装行为一致，无需在插件目录执行 `pnpm install`。
 详见 [DSH-Tavern 官方文档 · 安装与组合 DSH 扩展](https://flizzywine.github.io/dsh-tavern/#m07)。
 
 **不需要修改 DSH 源码，也没有"打补丁"这一步。**
