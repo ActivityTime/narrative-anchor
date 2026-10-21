@@ -2,7 +2,26 @@
 
 本文件随每次发布追加一条，记录该次推送的变更项。
 
-> 说明：自 `v1.0.0` 起版本号已统一为语义化版本（当前 `1.0.0`）；下方各条目按时间倒序记录变更。
+> 说明：自 `v1.0.0` 起版本号已统一为语义化版本（当前 `1.0.1`）；下方各条目按时间倒序记录变更。
+
+## v1.0.1（2026-10-21 发布：修复 folder-drop 安装无法加载）
+
+### 变更
+- **修复「加载失败：Cannot find package '@deepseek-ai/dsh-agent'」**（用户实测反馈）：
+  v1.0.0 经插件管理「GitHub 安装」落入 `<data>/plugins/` 后，由 DSHT guard 以原生
+  ESM 加载，Node 从插件目录上溯解析不到 asar 内的宿主包，静态 import 直接致命。
+  - `lib/settlement/official-v2.js`：去掉 `import { installModelSelection } from
+    '@deepseek-ai/dsh-agent'`，改为本地移植实现 `lib/settlement/model-selection.js`
+    （据 dsh-agent 0.2.1-rc.2 `model-selection.js` 逐行移植 assemble 快照 +
+    request 路由覆盖；未移植切模型通知——依赖 dsh-llm，且后台结算会话 selection
+    静态指定不会切换）。
+  - `lib/index.js`：`import Schema from '@deepseek-ai/schemastery'` 改为动态
+    import + 失败兜底 `lib/schema-shim.js`（标准 Schema v1 协议，补齐 Config 五项
+    默认值；cordis `resolveConfig` 只消费 `Config['~standard'].validate`）。
+    bundle 安装下仍优先使用真 schemastery，行为与既往一致。
+- **安装方式影响**：folder-drop（`<data>/plugins/`）安装不再需要手动 `pnpm install`，
+  与 bundle 安装（`dsh plugin --profile tavern add`）行为一致；配置默认值两种方式相同。
+- 版本号：`1.0.0` → `1.0.1`。
 
 ## v1.0.0（2026-10-21 发布：叙事锚定系统首个完整功能版本）
 
