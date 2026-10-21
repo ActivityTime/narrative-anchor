@@ -60,6 +60,12 @@ DSH-Tavern 插件：把每轮剧情沉淀为**大纲路线 + 当前状态 + 多�
 
 ## 四、安装
 
+NA 支持两条官方安装路径：**bundle 安装**（`dsh plugin add`，官方标准）与
+**folder-drop**（Tavern 的 `<data>/plugins/` 文件夹投放，DSHT 特有）。两者最终都通过
+cordis 加载同一份插件代码，功能完全一致；差异全在**安装机制**层面，见下方对照表。
+
+### 方式 A：bundle 安装（推荐）
+
 NA 是 DSH 的 **bundle 插件**（`package.json` 声明 `dsh.bundle.patch`）。在 **DSH 终端**执行
 （桌面版：设置 → 通用设置 → 打开 DSH 终端；profile 固定 `tavern`）：
 
@@ -69,7 +75,7 @@ dsh plugin --profile tavern add github:ActivityTime/narrative-anchor
 
 # 从本地路径安装
 dsh plugin --profile tavern add file:/绝对路径/narrative-anchor
-dsh plugin --profile tavern add link:/绝对路径/narrative-anchor
+dsh plugin --profile tavern add link:/绝对路径/narrative-anchor   # 软链，改源码即生效
 
 # 卸载
 dsh plugin --profile tavern remove narrative-anchor
@@ -86,11 +92,25 @@ dsh --profile tavern --dump-config   # 应出现 "# == narrative-anchor" 层
 >
 > ⛔ **本插件不在 npm 上**，`npm i narrative-anchor` 会 404。请用上面的 `dsh plugin add`。
 
-另一条官方路径是 Tavern 插件的文件夹投放：把插件文件夹放进
-`~/.dsh/profile-data/tavern/data/plugins/`，刷新页面即生效（不调 pnpm）。
-自 v1.0.1 起插件无任何运行时外部依赖（宿主包一律动态解析 + 本地兜底），
-folder-drop 与 bundle 安装行为一致，无需在插件目录执行 `pnpm install`。
+### 方式 B：folder-drop 文件夹投放
+
+把插件文件夹（含 `package.json` 的那一层）复制进
+`<data>/plugins/narrative-anchor/`（`<data>` = `~/.dsh/profile-data/tavern/data`），
+刷新页面 / 重启即生效。卸载即删除文件夹；放一个 `.tavern-disabled` 空文件可保留文件但卸载。
+Tavern 会自动生成 `.tavern-entry.mjs` 守卫文件并在 profile patch 里维护条目
+（id 前缀 `tavern-user-plugin-`，**请勿手改**）。
 详见 [DSH-Tavern 官方文档 · 安装与组合 DSH 扩展](https://flizzywine.github.io/dsh-tavern/#m07)。
+
+### 两种方式的差异（重要）
+
+| 维度 | bundle 安装（`dsh plugin add`） | folder-drop（`<data>/plugins/`） |
+|---|---|---|
+| 依赖安装 | pnpm 自动安装 + dual anchor（宿主包 `@deepseek-ai/*` 经 profile node_modules 解析） | **不调 pnpm、不装任何依赖**；守卫以原生 ESM 加载，裸 import 宿主包会直接「加载失败」 |
+| 对插件代码的要求 | 可静态 import 宿主提供的 peer 包 | **必须零运行时外部依赖**（v1.0.1 起 NA 已满足：宿主包改动态解析 + 本地兜底） |
+| 配置来源 | `cordis.patch.yml` seed 随配置层生效，`--dump-config` 可见 | 无 seed 层，配置完全来自插件 Schema 默认值（NA 两种方式默认值相同） |
+| 安装位置 | profile `node_modules/narrative-anchor`（`link:` 为软链） | `<data>/plugins/narrative-anchor/` 原目录 |
+| 重名检查 | pnpm 依赖树解析 | 与已安装包重名的文件夹会被跳过并记入问题列表 |
+| 维护方 | `dsh plugin` 命令 | Tavern 自动维护 patch 条目；增删靠增删文件夹 |
 
 **不需要修改 DSH 源码，也没有"打补丁"这一步。**
 
