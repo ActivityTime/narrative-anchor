@@ -1,6 +1,6 @@
 {
   "name": "narrative-anchor",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "DSH-Tavern 叙事锚定系统：大纲路线 + 多级记忆 + 当前状态，通过 DSHT 扩展注册点接入后台结算与 foreground-frame",
   "type": "module",
   "main": "lib/index.js",
